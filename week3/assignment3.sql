@@ -94,3 +94,17 @@ SELECT Scientific_name, Max_avg_volume
 │ Charadrius semipalmatus │ 11266.974320139941 │
 │ Phalaropus fulicarius   │  8906.775061603003 │
 └─────────────────────────┴────────────────────┘
+
+
+------ trying to do the above steps in one call ---------
+SELECT s.Scientific_name, MAX(avg_volume) AS Max_avg_volume
+FROM (
+  SELECT Nest_ID, AVG(((3.14 / 6) * (Width ^ 2) * Length)) AS avg_volume
+  FROM Bird_eggs
+  GROUP BY Nest_ID
+) AS Averages
+JOIN Bird_nests bn ON Averages.Nest_ID = bn.Nest_ID
+JOIN Species s ON bn.Species = s.Code
+GROUP BY s.Scientific_name
+ORDER BY Max_avg_volume DESC;
+-- it worked!
