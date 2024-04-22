@@ -257,4 +257,24 @@ SELECT * FROM Camp_assignment ca JOIN (
     LIMIT 3;
 
 -- how many bird eggs are in each nest?
-SELECT Nest_ID, COUNT(*) FROM Bird_eggs GROUP BY Nest_ID;
+SELECT Nest_ID, COUNT(*) FROM Bird_eggs 
+    GROUP BY Nest_ID;
+
+
+
+--------------------- week 4 -----------------------------
+
+.tables
+--SELECT Nest_ID, COUNT(*) FROM Bird_eggs 
+SELECT Species FROM Bird_nests WHERE Site = 'nome';
+
+------ nested tables, joins -----
+SELECT Scientific_name, Nest_count FROM 
+(SELECT Species, COUNT(*) AS Nest_count
+    FROM Bird_nests WHERE Site = 'nome'
+    GROUP BY Species
+    ORDER BY Species
+    LIMIT 2) JOIN Species ON Species = Code;
+
+-- outer joins
+
