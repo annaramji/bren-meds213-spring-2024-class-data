@@ -276,5 +276,144 @@ SELECT Scientific_name, Nest_count FROM
     ORDER BY Species
     LIMIT 2) JOIN Species ON Species = Code;
 
--- outer joins
+----- outer joins ----
+-- create 2 temp tables a and b
+CREATE TEMP TABLE a (cola INTEGER, common INTEGER);
+INSERT INTO a VALUES (1,1), (2,2), (3,3);
+SELECT * FROM a;
+CREATE TEMP TABLE b (common INTEGER, colb INTEGER);
+INSERT INTO b VALUES (2,2), (3,3), (4,4), (5,5);
+SELECT * FROM b;
+
+-- inner join
+SELECT * FROM a JOIN b USING (common);
+SELECT * FROM a INNER JOIN b USING (common);
+
+-- left or right outer join
+SELECT * FROM a LEFT JOIN b USING (common);
+
+-- CHANGE HOW NULL VALUES ARE DISPLAYED
+.nullvalue -NULL- 
+.nullvalue ''
+
+
+SELECT * FROM  a RIGHT JOIN b USING (common);
+
+-- What species do *not* have any nest data?
+
+SELECT * FROM Species
+    WHERE Code NOT IN ( SELECT DISTINCT Species FROM Bird_nests ); 
+
+-- Let's do the same using an outer join -- jk, start with inner join
+
+SELECT Code 
+    FROM Species JOIN Bird_nests ON Code = Species; -- 1547 rows
+
+SELECT Code 
+    FROM Species LEFT JOIN Bird_nests ON Code = Species; -- 1627 rows
+.nullvalue -NULL- 
+
+
+SELECT * 
+    FROM Species JOIN Bird_nests ON Code = Species; -- 1547 rows
+    -- first cols from Species table, last from Bird_nests table 
+SELECT Code, Scientific_name, Nest_ID, Species, Year
+    FROM Species LEFT JOIN Bird_nests ON Code = Species; -- 1627 rows
+-- Species column
+-- Nest_ID column -- puts NULL for Species where you have no data in Bird_nests
+SELECT COUNT(*) FROM Bird_nests WHERE Species = 'ruff';
+
+-- inner join -- removes rows where you have no Nest data
+SELECT Code, Scientific_name, Nest_ID, Species, Year
+    FROM Species JOIN Bird_nests ON Code = Species;
+
+-- find number of species for which we have no nest data
+SELECT Code, Scientific_name, Nest_ID, Species, Year
+    FROM Species LEFT JOIN Bird_nests ON Code = Species
+    WHERE Nest_ID IS NULL; -- 80 ROWS!! YAY
+
+
+-- a gotcha when doing grouping
+SELECT * FROM Bird_eggs LIMIT 3;
+
+-- Nest_ID 14eabaage01
+SELECT * FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+    WHERE Nest_ID = '14eabaage01'; -- Nest_ID row: replicating (only once in Nest table, 3x in egg table)
+
+-- Adding GROUP BY -- get Nest_ID and count
+SELECT Nest_ID, COUNT(*)
+    FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+    WHERE Nest_ID = '14eabaage01'
+    GROUP BY Nest_ID;
+
+SELECT Nest_ID, COUNT(*) AS num_eggs
+    FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+    WHERE Nest_ID = '14eabaage01'
+    GROUP BY Nest_ID;
+
+-- but what about this?
+SELECT Nest_ID, COUNT(*), Length
+    FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+    WHERE Nest_ID = '14eabaage01'
+    GROUP BY Nest_ID; -- db gives error 
+-- query doesn't make sense (3 diff values of Length, what you're asking it to do doesn't make sense)
+
+SELECT Nest_ID, Species, COUNT(*)
+        FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+        WHERE Nest_ID = '14eabagage01'
+        GROUP BY Nest_ID;
+-- work around #1
+SELECT Nest_ID, Species, COUNT(*)
+        FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+        WHERE Nest_ID = '14eabagage01'
+        GROUP BY Nest_ID, Species;
+-- work around #2
+SELECT Nest_ID, ANY_VALUE(Species), COUNT(*)
+        FROM Bird_nests JOIN Bird_eggs USING (Nest_ID)
+        WHERE Nest_ID = '14eabagage01'
+        GROUP BY Nest_ID; -- MY OUTPUT IS ACTUALLY WRONG FOR THIS, SHOULD BE 1 ROW, COUNT 3
+
+-- VIEWS
+SELECT * FROM Camp_assignment;
+
+SELECT Year, Site, Name, Start, "End"
+    FROM Camp_assignment JOIN Personnel
+    ON Observer = Abbreviation;
+
+CREATE VIEW v AS 
+    SELECT Year, Site, Name, Start, "End"
+        FROM Camp_assignment JOIN Personnel
+        ON Observer = Abbreviation;
+-- a view looks just like a table, but it's not real
+SELECT * FROM v;
+
+-- view is alias
+-- temp table performs query and stores it
+-- view reflects latest current data (transmaterialized)
+-- looks and functions like a real table, every time executed on the fly
+
+-- can you insert a row into a view? depends... can it backtrack and figure out...?
+CREATE VIEW v2 AS SELECT COUNT(*) FROM Species;
+SELECT * FROM v2;
+-- wouldn't make sense to insert a row into this view, since it's an aggregation
+
+
+------- set operations: UNION, INTERSECT, EXCEPT ----------
+
+-- iffy example: UNION
+SELECT Book_page, Nest_ID, Egg_num, Length, Width FROM Bird_eggs;
+-- book page is field notebook page it was written down on
+-- inches vs mm
+SELECT Book_page, Nest_ID, Egg_num, Length*25.4, Width*25.4 FROM Bird_eggs
+    WHERE Book_page = 'b14.6'
+    UNION -- like rbind
+SELECT Book_page, Nest_ID, Egg_num, Length, Width, FROM Bird_eggs
+    WHERE Book_page != 'b14.6'; -- if Book_page happens to be NULL, it's not going to be selected here
+-- UNION vs UNION ALL
+-- just mashes tables together
+
+-- what species do we not have any nest data for? (a new approach: #3)
+-- THIRD WAY TO ANSWER: WHICH SPECIES HAVE NO NEST DATA?
+SELECT Code FROM Species
+    EXCEPT SELECT DISTINCT Species FROM Bird_nests;
 
