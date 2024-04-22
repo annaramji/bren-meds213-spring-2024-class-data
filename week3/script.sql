@@ -416,4 +416,5 @@ SELECT Book_page, Nest_ID, Egg_num, Length, Width, FROM Bird_eggs
 -- THIRD WAY TO ANSWER: WHICH SPECIES HAVE NO NEST DATA?
 SELECT Code FROM Species
     EXCEPT SELECT DISTINCT Species FROM Bird_nests;
-
+DROP VIEW v;
+DROP VIEW v2;
