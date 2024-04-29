@@ -44,3 +44,23 @@ SELECT * FROM Species WHERE Relevance = 'Study species';
 -- leave off DELETE then add it after visual confirmation
 -- FROM Species WHERE .... -- then add DELETE later
 
+-- write to csv
+COPY Species TO 'species_fixed.csv' (HEADER, DELIMITER ','); -- comma separated values
+-- instead of table, you could have SELECT, JOIN, etc. statements -- save query in view or save results into csv file
+
+-- CREATE TABLE
+CREATE TABLE Snow_cover2 (
+    Site VARCHAR NOT NULL,
+    Year INTEGER NOT NULL CHECK (Year BETWEEN 1950 AND 2015),
+    Date DATE NOT NULL,
+    Plot VARCHAR, -- some Null in the data :/
+    Location VARCHAR NOT NULL,
+    Snow_cover INTEGER CHECK (Snow_cover > -1 AND Snow_cover < 101),
+    Observer VARCHAR
+);
+SELECT * FROM Snow_cover2;
+
+-- IMPORT data from csv to empty table we just defined
+COPY Snow_cover2 FROM 'snow_cover_fixedman_JB.csv' (HEADER TRUE);
+SELECT * FROM Snow_cover2;
+

@@ -75,6 +75,7 @@ CREATE TABLE Bird_eggs (
 );
 COPY Bird_eggs FROM 'ASDN_Bird_eggs.csv' (header TRUE);
 
+-- going from CSV to table inside database ?
 CREATE TABLE Snow_cover (
     Site VARCHAR NOT NULL,
     Year INTEGER NOT NULL CHECK (Year BETWEEN 1950 AND 2015),
@@ -84,4 +85,5 @@ CREATE TABLE Snow_cover (
     Snow_cover INTEGER CHECK (Snow_cover > -1 AND Snow_cover < 101),
     Observer VARCHAR
 );
+-- create empty table, them import csv to empty table
 COPY Snow_cover FROM 'snow_cover_fixedman_JB.csv' (header TRUE); -- csv manually altered
