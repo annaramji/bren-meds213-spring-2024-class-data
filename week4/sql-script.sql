@@ -31,4 +31,16 @@ SELECT * FROM Species;
 DELETE FROM Species WHERE Relevance = 'not sure yet';
 SELECT * FROM Species;
 -- deletes whole rows
+-- update and delete statements are dangerous -- can do a lot of damage
+
+-- DELETE FROM Species; -- this line would delete all rows from the Species table. 
+
+-- SAFE delete practice #1
+SELECT * FROM Species WHERE Relevance = 'Study species';
+-- AFTER confirming, then edit the statement
+-- DELETE * FROM Species WHERE Relevance = 'Study species';
+
+-- incomplete statement
+-- leave off DELETE then add it after visual confirmation
+-- FROM Species WHERE .... -- then add DELETE later
 
