@@ -64,3 +64,25 @@ SELECT * FROM Snow_cover2;
 COPY Snow_cover2 FROM 'snow_cover_fixedman_JB.csv' (HEADER TRUE);
 SELECT * FROM Snow_cover2;
 
+
+
+-- triggers (can't run it tho)
+CREATE TABLE Species (
+    Code TEXT PRIMARY KEY,
+    Common_name TEXT UNIQUE NOT NULL,
+    Scientific_name TEXT, -- can't make NOT NULL, MISSING DATA
+    Relevance TEXT 
+);
+
+.IMPORT -- CSV --SKIP 1 species.csv Species ???
+-- when you import into SQLite, instead of having NULLs, get an empty string (we don't want that! just want NULLs!)
+CREATE TRIGGER Update_species
+    AFTER INSERT ON Species
+    FOR EACH ROW
+    BEGIN
+        UPDATE Species
+        SET Scientific_name = NULL
+        WHERE Code = new.Code AND Scientific_name = ''; -- also need semicolon here to end internal statement
+        UPDATE something else ...;
+    END; -- ending the whole CREATE TRIGGER statement
+    
