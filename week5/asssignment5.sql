@@ -28,3 +28,23 @@ INSERT INTO Bird_eggs
 
 .nullvalue -NULL-
 SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01';
+
+
+-- not_in
+ bash query_timer.sh not_in 1000 'SELECT Code
+    FROM Species
+    WHERE Code NOT IN (SELECT DISTINCT Species FROM Bird_nests);' \
+     database.db timings.csv
+
+-- outer
+bash query_timer.sh outer 1000 'SELECT Code
+    FROM Bird_nests RIGHT JOIN Species
+    ON Species = Code
+    WHERE Nest_ID IS NULL;' \
+    database.db timings.csv
+
+-- except
+bash query_timer.sh except 1000 'SELECT Code FROM Species
+EXCEPT
+SELECT DISTINCT Species FROM Bird_nests;' \
+    database.db timings.csv

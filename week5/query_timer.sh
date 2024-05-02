@@ -37,7 +37,7 @@ end_time=$(date +%s)
 
 # calculate the elapsed time and average time per query
 elapsed_time=$((end_time - start_time))
-avg_time=$(bc -l <<< "$elapsed_time / $num_reps") # using -l for more precision
+rep_time=$(bc -l <<< "$elapsed_time / $num_reps") # using -l for more precision
 
 # write output (append to csv_file)
-echo "$label,$avg_time" >> "$csv_file"
+echo "$label,$rep_time" >> "$csv_file"
