@@ -24,10 +24,20 @@ CREATE TRIGGER egg_filler
 INSERT INTO Bird_eggs
     (Book_page, Year, Site, Nest_ID, Length, Width)
     VALUES ('b14.6', 2014, 'eaba', '14eabaage01', 12.34, 56.78);
+
+INSERT INTO Bird_eggs
+    (Book_page, Year, Site, Nest_ID, Length, Width)
+    VALUES ('b14.6', 2014, 'eaba', '14eabaage01', 12.44, 56.78);
 -- If this were the first egg measurement for this particular nest, immediately after the insert we would see:
 
 .nullvalue -NULL-
 SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01';
+
+--DELETE: being safe by using a select statement first
+SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
+
+-- DELETE
+-- DELETE FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
 
 
 -- not_in
