@@ -1,5 +1,6 @@
 SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01';
 .nullvalue -NULL-
+-- Create a Trigger (5.2)
 
 CREATE TRIGGER egg_filler
     AFTER INSERT ON Bird_eggs
@@ -38,6 +39,52 @@ SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
 
 -- DELETE
 -- DELETE FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
+
+
+-- PART 2
+
+CREATE TRIGGER all_filler
+    AFTER INSERT ON Bird_eggs
+    FOR EACH ROW
+    BEGIN
+        UPDATE Bird_eggs
+        SET 
+            Egg_num = (
+            -- return the maximum non-null value, vs greater than 0, then add 1
+                SELECT
+                    CASE
+                            WHEN MAX(Egg_num) IS NULL THEN 1
+                            ELSE MAX(Egg_num) + 1
+                        END
+                FROM Bird_eggs
+                WHERE Nest_ID = new.Nest_ID 
+                    ),
+
+            Book_page = (SELECT b.Book_page
+                FROM Bird_nests b WHERE b.Nest_ID = new.Nest_ID),
+
+            Year = (SELECT b.Year
+                FROM Bird_nests b WHERE b.Nest_ID = new.Nest_ID),
+
+            Site = (SELECT b.Site
+                FROM Bird_nests b WHERE b.Nest_ID = new.Nest_ID)
+            
+        WHERE Nest_ID = new.Nest_ID 
+            AND Egg_num IS NULL AND
+            Site IS NULL AND
+            Year IS NULL AND
+            Book_page IS NULL AND
+            Length = new.Length AND
+            Width = new.Width; 
+    END;
+
+
+-- test with insert statement
+INSERT INTO Bird_eggs
+    (Nest_ID, Length, Width)
+    VALUES ('14eabaage01', 12.34, 56.78);
+
+
 
 
 -- not_in
