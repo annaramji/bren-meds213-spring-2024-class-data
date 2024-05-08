@@ -37,7 +37,7 @@ SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01';
 --DELETE: being safe by using a select statement first
 SELECT * FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
 
--- DELETE
+-- careully DELETE (could also just use git resotre database.sqlite)
 -- DELETE FROM Bird_eggs WHERE Nest_ID = '14eabaage01' AND Egg_num = 5;
 
 
