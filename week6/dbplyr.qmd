@@ -2,3 +2,167 @@
 title: "dbplyr"
 ---
 
+```{r setup}
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(duckdb)
+```
+
+## Connect to database
+
+
+```{r connect}
+conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = "../week3/database.db")
+
+```
+
+```{r listTables}
+DBI::dbListTables(conn)
+```
+
+
+```{r species-table}
+species <- tbl(conn, "Species")
+species
+```
+
+
+## SQL query 
+
+```{r}
+# find Codes that start with a (using % operator)
+df <- dbGetQuery(conn = conn, "SELECT * FROM Species WHERE Code LIKE 'a%' ")
+df
+```
+
+## `dbplyr` way
+
+```{r}
+species %>%
+  filter(Relevance=="Study species") %>%
+  select(Code, Scientific_name) %>%
+  arrange(Scientific_name) %>%
+  head(3)
+```
+
+
+Add show_query() to the end to see what SQL it is sending!
+
+
+```{r}
+species %>% 
+  filter(Relevance == "Study species") %>% 
+  select(Code, Scientific_name) %>% 
+  show_query()
+
+```
+
+dbplyr is read only
+
+### use `collect()` to show df
+
+```{r}
+# Want a local copy that is a true dataframe?  Add collect():
+
+species %>% 
+  filter(Relevance == "Study species") %>% 
+  select(Code, Scientific_name) %>% 
+  collect()
+```
+
+use collect() after compressing your data (after grouping by, etc.)
+
+tbl, lazy evaluation
+
+"try to delay the `collect()`"
+
+
+
+Say we want to group species by relevance, show ?? per group
+
+```{r}
+# using count
+species %>% 
+  group_by(Relevance) %>% 
+  count()
+
+# or using summarize() and n()
+species_group <- species %>% 
+  group_by(Relevance) %>% 
+  summarize(num_species = n()) %>% 
+  arrange(-num_species)
+
+species_group
+```
+
+Note: still an SQL object
+
+```{r}
+species %>% 
+  group_by(Relevance) %>% 
+  summarize(num_species = n()) %>% 
+  arrange(-num_species) %>% 
+  show_query()
+```
+
+We can even mutate!!
+
+practice: add capital "X" in front of Code in species table
+
+
+
+```{r}
+
+species %>% 
+  mutate(Code = paste0("X", Code))
+
+
+species %>% 
+  mutate(Code = paste0("X", Code)) %>% 
+  show_query()
+```
+
+
+```{r}
+new_species_code <- species %>% 
+  mutate(Code = paste0("X", Code)) %>%
+  collect()
+```
+
+
+
+`dbplyr` is read-only -- if we re-run a query after this, we won't see those Xs even if we sved it as an r object
+
+
+## Joins
+
+You can even do joins!
+
+```{r}
+eggs_db <- tbl(conn, "Bird_eggs")
+nests_db <- tbl(conn, "Bird_nests")
+
+str(eggs_db) # gets a very complex object, not a dataframe
+
+nests_db %>% 
+  left_join(eggs_db, by = c("Nest_ID", "Year", "Site", "Book_page"), keep = FALSE)
+
+left_join(eggs_db, nests_db, by = c("Nest_ID", "Year", "Site", "Book_page"))
+
+left_join(eggs_db, nests_db, by = c("Nest_ID", "Year", "Site", "Book_page")) %>% 
+  show_query()
+
+```
+
+**Limitation**: no way to add or update data.  **dbplyr is view only**.
+If you want to add or update data, you'll need to use
+DBI functions.
+
+
+## Close the connection (best practice)
+
+```{r}
+DBI::dbDisconnect(conn = conn, shutdown = TRUE)
+```
+
