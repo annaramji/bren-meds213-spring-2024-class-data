@@ -1,0 +1,41 @@
+---
+
+title: "EDS 213: Databases & Data Management; Assignment 6.3"
+author: "Anna Ramji"
+date: "2024-05-13"
+---
+```{r}
+# install.packages("duckdb")
+library(dplyr)
+library(dbplyr)
+library(DBI)
+library(duckdb)
+library(tidyverse)
+```
+```{r}
+# Connect to the database
+conn <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+DBI::dbWriteTable(conn, "Bird_eggs", Bird_eggs)
+DBI::dbWriteTable(conn, "Bird_nests", Bird_nests)
+```
+
+```{r}
+# Load tables as tbls
+egg_table <- tbl(conn, "Bird_eggs")
+nest_table <- tbl(conn, "Bird_nests")
+
+# Join the tables and summarize to get total eggs per observer
+result <- nest_table %>%
+  inner_join(egg_table, by = c("Nest_ID" = "Nest_ID")) %>%
+  group_by(Observer) %>%
+  summarize(total_eggs = n()) %>%
+  arrange(desc(total_eggs)) %>%
+  head(3)
+
+# Print the desired output
+cat("# Ordered by: desc(total_eggs)\n")
+print(collect(result))
+
+# Show the query
+show_query(result)
+```
