@@ -11,6 +11,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+note: at the beginning, we ran library(sdcMicro) and sdcApp() to launch a shiny app and explore example data
+
 ## Case: South Park Elementary School Data
 
 Mayor McDaniels and Peter Charles (aka PC Principal) are concerned that even after removing direct identifiers such as names, SSNs, and IDs, students may still be easily re-identified in the yearly assessment dataset and have their math and reading scores revealed. For example, everyone in school knows that Tolkien Williams is the wealthiest kid in the whole town, whereas Kenny and his sister Karen are from a deprived household.
@@ -33,15 +36,18 @@ Q3. What would be the utility and information loss after implementing the anonym
 
 ```{r}
 library(sdcMicro)
+library(here)
 
-data <- read.csv("southpark-sdc.csv")
+wd <- here("week9")
+
+data <- read.csv(here(wd, "southpark-sdc.csv"))
 ```
 
 ### Review Data Structure
 
 ```{r}
 #Read the CSV dataset into a data frame
-df <- read.csv("southpark-sdc.csv")
+df <- data
 
 #Show the list of variable names
 head(df)
@@ -52,6 +58,18 @@ str(df)
 
 ***Discussion: What variables can be considered direct identifiers? What variables are quasi or indirect identifiers?***
 
+Direct:
+- student ID (stu_id_)
+- SSN (ssn)
+- name
+- potentially dob
+
+indirect/quasi:
+- zip
+- date of birth (dob)
+- income
+
+
 ## Data Prep - Converting variables
 
 As we can see, we will need to convert some of the variables first.
@@ -59,13 +77,13 @@ As we can see, we will need to convert some of the variables first.
 The variables *stu-id*, *SSN*, *name*, and *dob* will soon be removed from the dataset as they are direct identifiers. Let's focus on the remaining ones that need to be converted before we can proceed.
 
 ```{r}
-fname = "southpark-sdc.csv"
-file <- read.csv(fname)
+fname <- "southpark-sdc.csv"
+file <- read.csv(here(wd, fname))
 file <- varToFactor(obj=file, var=c("zip","age", "sex","race","ethn", "snap", "income", "learn_dis","phys_dis"))
 
 #Convert to numeric math_sc and read_sc
-?
-
+file <- varToNumeric(obj=file, var=c("math_sc", "read_sc"))
+str(file)
 ```
 
 ## Answering Questions
@@ -81,21 +99,24 @@ To answer this question, we must first set up an ***SDC problem***. In other wor
 #Select categorical key variables - aka quasi-identifiers
 
 sdcInitial <- createSdcObj(dat=file,
-                       keyVars=c(?),
-                       numVars=c(?),
-                       weightVar=NULL,
-                       hhId=NULL,
-                       strataVar=NULL,
-                       pramVars=NULL,
-                       excludeVars=c(?),
-                       seed=0,
-                       randomizeRecords=FALSE,
-                       alpha=c(1))
+                           keyVars=c("zip","age", "sex","race","ethn", "snap", "income", "learn_dis","phys_dis"),
+                           numVars=c("math_sc", "read_sc"),
+                           weightVar=NULL,
+                           hhId=NULL,
+                           strataVar=NULL,
+                           pramVars=NULL,
+                           excludeVars=c("ssn", "name", "dob"),
+                           seed=0,
+                           randomizeRecords=FALSE,
+                           alpha=c(1))
 # Summary of object
-?
+sdcInitial
+summary(sdcInitial)
 ```
 
 **Discussion: What about the stu_id? Why are we keeping it?**
+
+keeping stu_id because it is a direct identifier that can be used to link responses for research purposes as long as the data is safeguarded. However, before publicly sharing the dataset, we'd have to ensure that you remove this direct identifier to protect the students' privacy.
 
 Check the results below and the number of observations that violate 2-5 anonymity. What does that mean?
 
@@ -103,7 +124,8 @@ Check the results below and the number of observations that violate 2-5 anonymit
 
 ```{r}
 #The threshold depends on the size of the dataset and the access control (a conservative number for large surveys is 0.04)
-?
+sdcInitial@risk$global
+sdcInitial@risk$global$risk
 ```
 
 Ouch! What does that score mean?
@@ -117,9 +139,13 @@ We can further inspect this issue before moving to the second question.
 #### Which observations/subjects have a higher risk of being re-identified?
 
 ```{r}
-?
+sdcInitial@risk$individual
 
 ```
+
+see which case has higher chance to be re-identified
+
+-- can target more specific cases for collapsing, bracketing, etc. 
 
 ### Q2. How can the risk of re-identification be significantly reduced?
 
