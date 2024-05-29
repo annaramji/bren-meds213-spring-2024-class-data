@@ -19,19 +19,18 @@ Please complete this exercise in pairs or groups of three. Each group should dow
 
 ```{r}
 library(here)
-#library(tidyverse)
+library(tidyverse)
 library(sdcMicro)
 
 wd <- here("week9")
-
-whale_data <- read.csv(here(wd, "whale-sdc.csv"))
 ```
 
 #### Inspect the Dataset
 
 ```{r}
 #Read the CSV dataset into a data frame
-whale_df <- data
+whale_data <- read.csv(here(wd, "whale-sdc.csv"))
+whale_df <- whale_data # keeping raw data as-is
 
 #Show the list of variable names
 head(whale_df)
@@ -43,17 +42,36 @@ str(whale_df)
 
 #### Q1. How many direct identifiers are present in this dataset? What are they?
 
-A:
+A: 
+- fishery_license
+- lat + long
+- case_id (to keep internally)
 
 #### **Q2. What attributes would you consider quasi-identifiers? Why?**
 
-A:
+A: 
+- county (there can be multiple fisheries in  a county, location), 
+- state 
+- (NOT lat, long) (multiple fisheries can fish in the same area, whales can be found in multiple locations that overlap w multiple fishery areas, but some feel where they fish is private data)
+- origin (could be multiple fisheries with the same origin but helps to narrow it down a lot)
 
 #### **Q3. What types of variables are they? Define them. (numeric, integer, factor or string)**
+
+fishery_license: numeric/double (should be factor but we're getting rid of it so no need to convert)
+county: character (should be factor?)
+lat & long: numeric 
+year & month: could be factors, but we're setting to numeric
+
+also want  type, state, condition, origin, gear, fine, infraction type to be factors
+same with inj_level
 
 Make sure to have them set correctly.
 
 ```{r}
+# Convert variables to factors
+whale_data <- varToFactor(obj=whale_df, var=c("county", "type", "state", "condition", "origin", "gear", "fine", "infraction_type", "inj_level"))
+
+whale_data <- varToNumeric(obj = whale_data, var = c("lat", "long", "year", "month"))
 
 ```
 
@@ -62,12 +80,43 @@ Make sure to have them set correctly.
 #### **Q4.1 What is the risk of re-identification for this dataset?**
 
 ```{r}
+#Select variables for creating the sdcMicro object
+#Select categorical key variables - aka quasi-identifiers
 
+sdc_initial <- createSdcObj(dat = whale_data,
+                           keyVars = c("county", "state", "origin"),
+                           numVars = c("year", "month"),
+                           weightVar = NULL,
+                           hhId = NULL,
+                           strataVar = NULL,
+                           pramVars = NULL,
+                           # keeping case_id for now, would want to drop at the end
+                           excludeVars = c("fishery_license", "lat", "long"),
+                           seed = 0,
+                           randomizeRecords = FALSE,
+                           alpha = c(1))
+```
+
+
+```{r}
+# Summary of object
+sdc_initial
+summary(sdc_initial)
+
+
+sdc_initial@risk$global
+sdc_initial@risk$global$risk
+
+paste0("The risk of identifying a fishery based on the current data is ", round(sdc_initial@risk$global$risk_pct, 3), "%.")
+
+head(sdc_initial@risk$individual)
 ```
 
 #### Q4.2 To what extent does this dataset violate k-anonymity?
 
 ```{r}
+sdc_initial
+print(sdc_initial, 'kAnon')
 
 ```
 
@@ -76,17 +125,40 @@ Make sure to have them set correctly.
 #### Q5.1 Apply one non-perturbative method to a variable of your choice. How effective was it in lowering the disclosure risk?
 
 ```{r}
+table(sdc_initial@manipKeyVars$county)
 
+table(sdc_initial@manipKeyVars$origin)
+
+# dropping those 8 rows of recreational and tribal might be better, or dropping the column (not as recommended)
+sdc_initial <- groupAndRename(obj= sdc_initial, var= c("origin"), before=c("recreational", "tribal"),
+                              after=c("non-commercial")) 
+
+# check to see if binning worked
+table(sdc_initial@manipKeyVars$origin)
+
+# paste0("The risk of identifying a fishery based on the updated data is ", round(sdc_initial@risk$global$risk_pct, 3), "%.")
+sdc_initial
 ```
 
 #### Q5.2 Apply ( k-3) anonymization to this dataset.
 
 ```{r}
+#Local suppression to obtain k-anonymity
+sdc_initial <- kAnon(sdc_initial, k=c(3))
 
+#sdc_initial
+
+#Global risk
+sdc_initial@risk$global$risk_pct # down to 5.07% !!!
+
+#K-anon
+
+print(sdc_initial, 'kAnon')
 ```
 
 #### Q6. Compute the information loss for the de-identified version of the dataset. 
 
 ```{r}
+print(sdc_initial, 'ls')
 
 ```
