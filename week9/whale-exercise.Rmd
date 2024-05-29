@@ -24,12 +24,20 @@ library(sdcMicro)
 
 wd <- here("week9")
 
-data <- read.csv(here(wd, "whale-sdc.csv"))
+whale_data <- read.csv(here(wd, "whale-sdc.csv"))
 ```
 
 #### Inspect the Dataset
 
 ```{r}
+#Read the CSV dataset into a data frame
+whale_df <- data
+
+#Show the list of variable names
+head(whale_df)
+
+#Summary of the data frame
+str(whale_df)
 
 ```
 

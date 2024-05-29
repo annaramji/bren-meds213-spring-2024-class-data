@@ -314,13 +314,21 @@ Based on the results, we can tell PC Principal and Mayor McDaniels that the supp
 
 ```{r}
 #Adding a new randomized ID-variable
-sdcInitial <- createNewID(sdcInitial, newID="", withinVar="")
+sdcInitial <- createNewID(sdcInitial, newID="ID", withinVar="stu_id")
 ```
 
 #### **Exporting the anonymized dataset**
 
 ```{r}
-writeSafeFile(obj=sdcInitial, format="csv", randomizeRecords="no", col.names=TRUE, sep=",", dec=".", fileOut="southpark-anon.csv")
+writeSafeFile(obj=sdcInitial, format="csv", randomizeRecords="no",
+              col.names=TRUE, sep=",", dec=".",
+              fileOut="southpark-anon.csv")
 
 #Please be aware that there is currently a glitch causing the column names in the output file to be offset by one. Also, remember that we intentionally kept the student IDs? This allows us to link responses for research purposes as long as the data is safeguarded. However, before publicly sharing the dataset, we'd have to ensure that you remove this direct identifier to protect the students' privacy.
 ```
+
+```{r}
+southpark_anon <- read.csv(here(wd, "southpark-anon.csv"))
+View(southpark_anon)
+```
+
